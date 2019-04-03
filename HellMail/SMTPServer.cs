@@ -1,38 +1,15 @@
 ﻿using System;
-using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 
 namespace HellMail {
 
-    public class SMTPServer {
+    public class SMTPServer : TCPServer {
 
-        private readonly TcpListener listener;
-
-        public SMTPServer(string IP, int portNumber) {
-            listener = new TcpListener(IPAddress.Parse(IP), portNumber);
+        public SMTPServer(string IP, int portNumber) : base(IP, portNumber) {
+            this.setName("SMTP");
         }
 
-        public void Start() {
-
-            // Start listening 
-            listener.Start();
-            Console.WriteLine("Server started");
-
-            while(true) {
-                // Wait for a client to connect
-                Socket client = listener.AcceptSocket();
-                Console.WriteLine("Client connection accepted");
-
-                // Start ProcessClient() on a new Thread
-                var clientThread = new Thread(() => ProcessClient(client));
-                clientThread.Start();
-            }
-
-        }
-
-        private void ProcessClient(Socket client) {
+        protected override void ProcessClient(Socket client) {
 
             Write(client,"220 localhost -- Fake proxy server");
 
@@ -71,20 +48,13 @@ namespace HellMail {
                 if (strMessage.StartsWith("DATA", StringComparison.CurrentCulture)) {
                     Write(client, "354 Start mail input; end with");
                     strMessage = Read(client);
+                    Mail mail = new Mail();
+
+                    mail.Parse(strMessage);
+
                     Write(client, "250 OK");
                 }   
             }
-        }
-
-        private void Write(Socket client, string message) {
-            byte[] msg = Encoding.ASCII.GetBytes(message + "\n");
-            client.Send(msg);
-        }
-
-        private string Read(Socket client) {
-            byte[] data = new byte[8000];
-            int size = client.Receive(data);
-            return Encoding.ASCII.GetString(data, 0, size);
         }
 
     }
