@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HellMail.Data
 {
-    public class MailServerContext : DbContext
+    public class HellMailContext : DbContext
     {
         public DbSet<Mail> Mails { get; set; }
         public DbSet<User> Users { get; set; }
