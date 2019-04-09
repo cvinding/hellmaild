@@ -1,59 +1,68 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Sockets;
 
 namespace HellMail {
 
     public class SMTPServer : TCPServer {
 
-        public SMTPServer(string IP, int portNumber) : base(IP, portNumber) {
+        public SMTPServer(string IP, int portNumber, string cert) : base(IP, portNumber, cert) {
             this.setName("SMTP");
         }
 
-        protected override void ProcessClient(Socket client) {
+        protected override void ProcessClient(TcpClient client) {
 
-            Write(client,"220 localhost -- Fake proxy server");
+            Write(client,"220 " + Environment.MachineName + " hellmaild");
 
-            string strMessage = String.Empty;
+            string input = String.Empty;
             while (true) {
 
                 try {
-                    strMessage = Read(client);
+                    input = ReadLine(client);
+
+                    Console.Write("input:" + input);
+
                 } catch (Exception e) {
                     Console.WriteLine(e);
                     break;
                 }
 
-                if (strMessage.Length <= 0) {
-                    continue;
-                }
-
-                if (strMessage.StartsWith("QUIT", StringComparison.CurrentCulture)) {
+                if (input.StartsWith("QUIT", StringComparison.CurrentCulture)) {
+                    Write(client, "221 Goodbye");
                     client.Close();
                     break;//exit while
                 }
 
                 //message has successfully been received
-                if (strMessage.StartsWith("EHLO", StringComparison.CurrentCulture)) {
-                    Write(client, "250 OK");
+                if (input.StartsWith("EHLO", StringComparison.CurrentCulture)) {
+                    Write(client, "250 " + Environment.MachineName + ", I am glad to meet you");
+                    continue;
                 }
 
-                if (strMessage.StartsWith("RCPT TO", StringComparison.CurrentCulture)) {
+                if (input.StartsWith("RCPT TO", StringComparison.CurrentCulture)) {
                     Write(client, "250 OK");
+                    continue;
                 }
 
-                if (strMessage.StartsWith("MAIL FROM", StringComparison.CurrentCulture)) {
+                if (input.StartsWith("MAIL FROM", StringComparison.CurrentCulture)) {
                     Write(client, "250 OK");
+                    continue;
                 }
 
-                if (strMessage.StartsWith("DATA", StringComparison.CurrentCulture)) {
-                    Write(client, "354 Start mail input; end with");
-                    strMessage = Read(client);
-                    Mail mail = new Mail();
+                if (input.StartsWith("DATA", StringComparison.CurrentCulture)) {
+                    Write(client, "354 Start mail input; end with '.\\n'");
 
-                    mail.Parse(strMessage);
+                    input = ReadLine(client);
+
+                    //BRUG måske 501
 
                     Write(client, "250 OK");
-                }   
+                    continue;
+                }
+
+
+                Write(client, "500 unknown command");
+
             }
         }
 

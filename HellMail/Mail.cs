@@ -11,10 +11,10 @@ namespace HellMail {
         private string subject;
 
         // Optional mail tags
-        private string date;
+        //private string date;
         private string message;
-        private List<string> cc;
-        private List<string> bcc;
+        //private List<string> cc;
+        //private List<string> bcc;
 
         public Mail Parse(string SMTPDataMail) {
             if(SMTPDataMail.Length <= 0) {
@@ -23,6 +23,15 @@ namespace HellMail {
 
             //string[] required = { "to", "from", "subject" };
             //string[] optional = { "date", "cc", "bcc" };
+
+            /*
+
+            Find ud hvornår email tags stopper, og hvornår message starter 
+            Find mail tags
+            Parse mail tags
+            Returner Mail klassen
+
+            */
 
             try {
 
