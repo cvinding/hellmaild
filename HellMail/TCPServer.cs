@@ -22,7 +22,7 @@ namespace HellMail {
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls | SecurityProtocolType.SystemDefault;
             // Set Self Signed Certificate 
-            serverCertificate = new X509Certificate2(cert, "1234");
+            serverCertificate = new X509Certificate2(cert);
 
             listener = new TcpListener(IPAddress.Parse(IP), portNumber);
         }
@@ -56,17 +56,20 @@ namespace HellMail {
 
         // Write() is used to write an message to the client
         protected void Write(Socket client, string message) {
-
-            NetworkStream networkStream = new NetworkStream(client, false);
-
-            SslStream sslStream = new SslStream(networkStream, false);
+            SslStream sslStream = null;
 
             try {
-                sslStream.AuthenticateAsServer(serverCertificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
+                NetworkStream networkStream = new NetworkStream(client, false);
+
+                sslStream = new SslStream(networkStream, true, (a, b, c, d) => true);
+
+                sslStream.AuthenticateAsServer(serverCertificate, false, System.Security.Authentication.SslProtocols.None, false);
 
             } catch (Exception ex) {
                 Console.WriteLine(ex);
             }
+
+            sslStream.Flush();
 
             byte[] msg = Encoding.ASCII.GetBytes(message + "\n");
             sslStream.Write(msg);
@@ -74,14 +77,18 @@ namespace HellMail {
 
         protected void Write(TcpClient client, string message) {
 
-            SslStream sslStream = new SslStream(client.GetStream(), false);
+            SslStream sslStream = null;
 
             try {
-                sslStream.AuthenticateAsServer(serverCertificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
+
+                sslStream = new SslStream(client.GetStream(), true, (a, b, c, d) => true);
+                sslStream.AuthenticateAsServer(serverCertificate, true, System.Security.Authentication.SslProtocols.None, false);
 
             } catch (Exception ex) {
                 Console.WriteLine(ex);
             }
+
+            sslStream.Flush();
 
             byte[] msg = Encoding.ASCII.GetBytes(message + "\n");
             sslStream.Write(msg);
@@ -165,15 +172,24 @@ namespace HellMail {
 
             //NetworkStream networkStream = new NetworkStream(client, false);
 
-            SslStream sslStream = new SslStream(client.GetStream(), false);
+            SslStream sslStream = null;
 
             try {
-                sslStream.AuthenticateAsServer(serverCertificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
+                sslStream = new SslStream(client.GetStream(), true, (a, b, c, d) => true);
+
+                //sslStream.AuthenticateAsServer(serverCertificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
+                sslStream.AuthenticateAsServer(serverCertificate, true, System.Security.Authentication.SslProtocols.None, false);
+
             } catch (Exception ex) {
                 Console.WriteLine(ex);
             }
 
+            sslStream.Flush();
+
             byte[] buffer = new byte[1024];
+
+
+
             int n = sslStream.Read(buffer, 0, buffer.Length);
 
             string _message = Encoding.UTF8.GetString(buffer, 0, n);
