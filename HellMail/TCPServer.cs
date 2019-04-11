@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
@@ -34,167 +35,48 @@ namespace HellMail {
 
             while (true) {
                 // Wait for a client to connect
-                //Socket client = listener.AcceptSocket();
                 TcpClient client = listener.AcceptTcpClient();
 
                 Console.WriteLine(name + ": Client connection accepted");
 
+                SslStream sslStream = new SslStream(client.GetStream(), true, (a,b,c,d) => true);
+                sslStream.AuthenticateAsServer(serverCertificate, true, SslProtocols.Tls12, false);
+
+                if(sslStream.IsAuthenticated) {
+                    Console.WriteLine(name + ": Client SSL authenticated");
+                } else {
+                    throw new Exception("SSL Authentication failed");
+                }
+
                 // Start ProcessClient() on a new Thread
-                var clientThread = new Thread(() => ProcessClient(client));
+                var clientThread = new Thread(() => ProcessClient(sslStream));
                 clientThread.Start();
             }
 
         }
 
-        protected virtual void ProcessClient(Socket client) { }
+        protected virtual void ProcessClient(SslStream client) { }
 
-        protected virtual void ProcessClient(TcpClient client) { }
-
+        // Set the name of the server protocol, e.g. SMTP or POP3
         protected void setName(string name) {
             this.name = name;
         }
 
         // Write() is used to write an message to the client
-        protected void Write(Socket client, string message) {
-            SslStream sslStream = null;
-
-            try {
-                NetworkStream networkStream = new NetworkStream(client, false);
-
-                sslStream = new SslStream(networkStream, true, (a, b, c, d) => true);
-
-                sslStream.AuthenticateAsServer(serverCertificate, false, System.Security.Authentication.SslProtocols.None, false);
-
-            } catch (Exception ex) {
-                Console.WriteLine(ex);
-            }
-
-            sslStream.Flush();
-
+        protected void Write(SslStream client, string message) {
             byte[] msg = Encoding.ASCII.GetBytes(message + "\n");
-            sslStream.Write(msg);
+            client.Write(msg);
         }
 
-        protected void Write(TcpClient client, string message) {
-
-            SslStream sslStream = null;
-
-            try {
-
-                sslStream = new SslStream(client.GetStream(), true, (a, b, c, d) => true);
-                sslStream.AuthenticateAsServer(serverCertificate, true, System.Security.Authentication.SslProtocols.None, false);
-
-            } catch (Exception ex) {
-                Console.WriteLine(ex);
-            }
-
-            sslStream.Flush();
-
-            byte[] msg = Encoding.ASCII.GetBytes(message + "\n");
-            sslStream.Write(msg);
-        }
-
-        // Read() is used to read the messages from the client
-        /*protected string Read(Socket client) {
-
-            /*NetworkStream networkStream = new NetworkStream(client, false);
-
-            SslStream sslStream = new SslStream(networkStream, false);
-            
-            try {
-                sslStream.AuthenticateAsServer(serverCertificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
-
-            } catch (Exception ex) {
-                Console.WriteLine(ex);
-            }*/
-
-            //8192
-           /* byte[] buffer = new byte[2048];
-            StringBuilder messageData = new StringBuilder();
-            int bytes = -1;
-            do {
-                // Read the client's test message.
-                bytes = client.Receive(buffer);
-                Console.WriteLine(messageData.ToString());
-
-                // Use Decoder class to convert from bytes to UTF8
-                // in case a character spans two buffers.
-                Decoder decoder = Encoding.UTF8.GetDecoder();
-                char[] chars = new char[decoder.GetCharCount(buffer, 0, bytes)];
-                decoder.GetChars(buffer, 0, bytes, chars, 0);
-                messageData.Append(chars);
-                // Check for EOF or an empty message.
-                if (messageData.ToString().IndexOf("<EOF>", StringComparison.OrdinalIgnoreCase) != -1) {
-                    break;
-                }
-            } while (bytes != 0);
-
-            return messageData.ToString();
-        }*/
-
-        /*protected string Read(TcpClient client) {
-            SslStream sslStream = new SslStream(client.GetStream(), false);
-
-            try {
-                sslStream.AuthenticateAsServer(serverCertificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
-
-            } catch (Exception ex) {
-                Console.WriteLine(ex);
-            }
-
-            //8192
-            byte[] buffer = new byte[2048];
-            StringBuilder messageData = new StringBuilder();
-            int bytes = -1;
-            do
-            {
-                // Read the client's test message.
-                bytes = sslStream.Read(buffer, 0, buffer.Length);
-
-
-                // Use Decoder class to convert from bytes to UTF8
-                // in case a character spans two buffers.
-                Decoder decoder = Encoding.UTF8.GetDecoder();
-                char[] chars = new char[decoder.GetCharCount(buffer, 0, bytes)];
-                decoder.GetChars(buffer, 0, bytes, chars, 0);
-                messageData.Append(chars);
-                // Check for EOF or an empty message.
-                if (messageData.ToString().IndexOf("<EOF>", StringComparison.OrdinalIgnoreCase) != -1)
-                {
-                    break;
-                }
-            } while (bytes != 0);
-
-            return messageData.ToString();
-        }*/
-
-        protected string ReadLine(TcpClient client) {
-
-            //NetworkStream networkStream = new NetworkStream(client, false);
-
-            SslStream sslStream = null;
-
-            try {
-                sslStream = new SslStream(client.GetStream(), true, (a, b, c, d) => true);
-
-                //sslStream.AuthenticateAsServer(serverCertificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
-                sslStream.AuthenticateAsServer(serverCertificate, true, System.Security.Authentication.SslProtocols.None, false);
-
-            } catch (Exception ex) {
-                Console.WriteLine(ex);
-            }
-
-            sslStream.Flush();
-
+        protected string ReadLine(SslStream client) {
+        
             byte[] buffer = new byte[1024];
 
-
-
-            int n = sslStream.Read(buffer, 0, buffer.Length);
+            int n = client.Read(buffer, 0, buffer.Length);
 
             string _message = Encoding.UTF8.GetString(buffer, 0, n);
 
-            Console.WriteLine(_message);
+            Console.WriteLine("read:" + _message);
 
             return _message;
         }

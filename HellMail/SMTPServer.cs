@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Security;
 using System.Net.Sockets;
 
 namespace HellMail {
@@ -10,7 +11,7 @@ namespace HellMail {
             this.setName("SMTP");
         }
 
-        protected override void ProcessClient(TcpClient client) {
+        protected override void ProcessClient(SslStream client) {
 
             Write(client,"220 " + Environment.MachineName + " hellmaild");
 

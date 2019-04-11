@@ -7,12 +7,9 @@ namespace HellMail {
 
         public static void Main(string[] args) {
 
-            for(int i = 0; i < args.Length; i++)
-            {
+            for(int i = 0; i < args.Length; i++) {
                 Console.WriteLine(i + ":" + args[i]);
             }
-
-
 
             try {
                 SMTPServer server = new SMTPServer("0.0.0.0", int.Parse(args[1]), args[0]);
