@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -21,7 +19,9 @@ namespace HellMail {
 
         public TCPServer(string IP, int portNumber, string cert) {
 
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls | SecurityProtocolType.SystemDefault;
+            // Set TLS protocol 
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
             // Set Self Signed Certificate 
             serverCertificate = new X509Certificate2(cert);
 
@@ -40,9 +40,10 @@ namespace HellMail {
                 Console.WriteLine(name + ": Client connection accepted");
 
                 SslStream sslStream = new SslStream(client.GetStream(), true, (a,b,c,d) => true);
-                sslStream.AuthenticateAsServer(serverCertificate, true, SslProtocols.Tls12, false);
+           
+                sslStream.AuthenticateAsServer(serverCertificate, false, SslProtocols.Tls12, false);
 
-                if(sslStream.IsAuthenticated) {
+                if (sslStream.IsAuthenticated) {
                     Console.WriteLine(name + ": Client SSL authenticated");
                 } else {
                     throw new Exception("SSL Authentication failed");
@@ -55,6 +56,7 @@ namespace HellMail {
 
         }
 
+        // A way for the deprived classes to process the clients
         protected virtual void ProcessClient(SslStream client) { }
 
         // Set the name of the server protocol, e.g. SMTP or POP3
@@ -62,42 +64,22 @@ namespace HellMail {
             this.name = name;
         }
 
-        // Write() is used to write an message to the client
-        protected void Write(SslStream client, string message) {
+        // StreamWrite() is used to write a message to the client
+        protected void StreamWrite(SslStream client, string message) {
             byte[] msg = Encoding.ASCII.GetBytes(message + "\n");
             client.Write(msg);
         }
 
-        protected string ReadLine(SslStream client) {
-        
+        // StreamRead() is used to read a message from the client
+        protected string StreamRead(SslStream client) {
             byte[] buffer = new byte[1024];
 
             int n = client.Read(buffer, 0, buffer.Length);
 
             string _message = Encoding.UTF8.GetString(buffer, 0, n);
 
-            Console.WriteLine("read:" + _message);
-
             return _message;
         }
-
-        /*protected string ReadMultiLine(Socket client, string end) {
-            string currentLine;
-            string result = "";
-
-            do {
-
-                currentLine = ReadLine(client);
-                result += currentLine;
-
-                Console.Write(currentLine.Length + ": " + currentLine);
-
-            } while (currentLine.Replace(System.Environment.NewLine, "") != end);
-
-            Console.WriteLine("DU KOM UD");
-
-            return result;
-        }*/
 
     }
 }
