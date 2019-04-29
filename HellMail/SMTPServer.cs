@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Net.Security;
 
-namespace HellMail
-{
+namespace HellMail {
 
     public class SMTPServer : TCPServer {
 
@@ -26,29 +25,29 @@ namespace HellMail
                     break;
                 }
 
-                if (input.StartsWith("QUIT", StringComparison.CurrentCulture)) {
+                if (input.StartsWith("QUIT", StringComparison.CurrentCultureIgnoreCase)) {
                     StreamWrite(client, "221 Goodbye");
                     client.Close();
                     break;//exit while
                 }
 
                 //message has successfully been received
-                if (input.StartsWith("EHLO", StringComparison.CurrentCulture)) {
+                if (input.StartsWith("EHLO", StringComparison.CurrentCultureIgnoreCase)) {
                     StreamWrite(client, "250 " + Environment.MachineName + ", I am glad to meet you");
                     continue;
                 }
 
-                if (input.StartsWith("RCPT TO", StringComparison.CurrentCulture)) {
+                if (input.StartsWith("RCPT TO", StringComparison.CurrentCultureIgnoreCase)) {
                     StreamWrite(client, "250 OK");
                     continue;
                 }
 
-                if (input.StartsWith("MAIL FROM", StringComparison.CurrentCulture)) {
+                if (input.StartsWith("MAIL FROM", StringComparison.CurrentCultureIgnoreCase)) {
                     StreamWrite(client, "250 OK");
                     continue;
                 }
 
-                if (input.StartsWith("DATA", StringComparison.CurrentCulture)) {
+                if (input.StartsWith("DATA", StringComparison.CurrentCultureIgnoreCase)) {
                     StreamWrite(client, "354 Start mail input; end with '.\\n'");
 
                     input = StreamRead(client);
