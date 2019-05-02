@@ -31,6 +31,7 @@ namespace HellMail {
         public void Start() {
             // Start listening 
             listener.Start();
+            Console.WriteLine(name + " FQDN: " + Helper.GetFQDN());
             Console.WriteLine(name + " Server started");
 
             while (true) {
@@ -39,7 +40,7 @@ namespace HellMail {
 
                 Console.WriteLine(name + ": Client connection accepted");
 
-                SslStream sslStream = new SslStream(client.GetStream(), true, (a,b,c,d) => true);
+                SslStream sslStream = new SslStream(client.GetStream(), false, (a,b,c,d) => true);
            
                 sslStream.AuthenticateAsServer(serverCertificate, false, SslProtocols.Tls12, false);
 

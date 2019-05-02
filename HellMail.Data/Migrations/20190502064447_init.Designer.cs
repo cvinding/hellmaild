@@ -3,14 +3,16 @@ using System;
 using HellMail.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace HellMail.Data.Migrations
 {
     [DbContext(typeof(HellMailContext))]
-    partial class HellMailContextModelSnapshot : ModelSnapshot
+    [Migration("20190502064447_init")]
+    partial class init
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

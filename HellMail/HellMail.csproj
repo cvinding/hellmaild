@@ -8,4 +8,7 @@
   <ItemGroup>
     <Compile Remove="MailParser.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HellMail.Data\HellMail.Data.csproj" />
+  </ItemGroup>
 </Project>

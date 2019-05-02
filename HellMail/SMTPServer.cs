@@ -12,7 +12,7 @@ namespace HellMail {
         // ProcessClient is the SMTP server's way of handling SMTP clients
         protected override void ProcessClient(SslStream client) {
 
-            StreamWrite(client,"220 " + Environment.MachineName + " hellmaild");
+            StreamWrite(client,"220 " + Helper.GetFQDN() + " hellmaild");
 
             string input = String.Empty;
             while (true) {
@@ -33,7 +33,7 @@ namespace HellMail {
 
                 //message has successfully been received
                 if (input.StartsWith("EHLO", StringComparison.CurrentCultureIgnoreCase)) {
-                    StreamWrite(client, "250 " + Environment.MachineName + ", I am glad to meet you");
+                    StreamWrite(client, "250 " + Helper.GetFQDN() + ", I am glad to meet you");
                     continue;
                 }
 

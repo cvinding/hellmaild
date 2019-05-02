@@ -38,6 +38,33 @@ namespace HellMail.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Hidden_Mails",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    mail_id = table.Column<int>(nullable: true),
+                    owner_id = table.Column<int>(nullable: true),
+                    hidden = table.Column<int>(nullable: false, defaultValue: 0)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Hidden_Mails", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_Hidden_Mails_Mails_mail_id",
+                        column: x => x.mail_id,
+                        principalTable: "Mails",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Hidden_Mails_Users_owner_id",
+                        column: x => x.owner_id,
+                        principalTable: "Users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Mails_Users",
                 columns: table => new
                 {
@@ -46,7 +73,8 @@ namespace HellMail.Data.Migrations
                     mail_id = table.Column<int>(nullable: true),
                     from_user_id = table.Column<int>(nullable: true),
                     to_user_id = table.Column<int>(nullable: true),
-                    recipient_type = table.Column<int>(nullable: false, defaultValue: 0)
+                    recipient_type = table.Column<int>(nullable: false, defaultValue: 0),
+                    hidden = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -72,6 +100,16 @@ namespace HellMail.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Hidden_Mails_mail_id",
+                table: "Hidden_Mails",
+                column: "mail_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Hidden_Mails_owner_id",
+                table: "Hidden_Mails",
+                column: "owner_id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Mails_Users_from_user_id",
                 table: "Mails_Users",
                 column: "from_user_id");
@@ -89,6 +127,9 @@ namespace HellMail.Data.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Hidden_Mails");
+
             migrationBuilder.DropTable(
                 name: "Mails_Users");
 

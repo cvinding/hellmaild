@@ -21,6 +21,10 @@
     <Compile Remove="Migrations\20190425093355_init2.Designer.cs" />
     <Compile Remove="Migrations\20190425103911_recipient_field_added.cs" />
     <Compile Remove="Migrations\20190425103911_recipient_field_added.Designer.cs" />
+    <Compile Remove="Migrations\20190425104446_init.cs" />
+    <Compile Remove="Migrations\20190425104446_init.Designer.cs" />
+    <Compile Remove="Migrations\20190430082515_hiddenField.cs" />
+    <Compile Remove="Migrations\20190430082515_hiddenField.Designer.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.3" />
@@ -37,5 +41,8 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Migrations\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Migrations\obj\HellMail.Data.EntityFrameworkCore.targets" />
   </ItemGroup>
 </Project>

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HellMail.Data.Migrations
 {
     [DbContext(typeof(HellMailContext))]
-    [Migration("20190425104446_init")]
+    [Migration("20190502064113_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -18,6 +18,26 @@ namespace HellMail.Data.Migrations
             modelBuilder
                 .HasAnnotation("ProductVersion", "2.2.3-servicing-35854")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
+
+            modelBuilder.Entity("HellMail.Domain.Hidden_Mails", b =>
+                {
+                    b.Property<int>("id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<int>("hidden");
+
+                    b.Property<int?>("mail_id");
+
+                    b.Property<int?>("owner_id");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("mail_id");
+
+                    b.HasIndex("owner_id");
+
+                    b.ToTable("Hidden_Mails");
+                });
 
             modelBuilder.Entity("HellMail.Domain.Mail", b =>
                 {
@@ -39,6 +59,8 @@ namespace HellMail.Data.Migrations
                         .ValueGeneratedOnAdd();
 
                     b.Property<int?>("from_user_id");
+
+                    b.Property<int>("hidden");
 
                     b.Property<int?>("mail_id");
 
@@ -75,6 +97,17 @@ namespace HellMail.Data.Migrations
                     b.HasKey("id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("HellMail.Domain.Hidden_Mails", b =>
+                {
+                    b.HasOne("HellMail.Domain.Mail", "mail_")
+                        .WithMany()
+                        .HasForeignKey("mail_id");
+
+                    b.HasOne("HellMail.Domain.User", "owner_")
+                        .WithMany()
+                        .HasForeignKey("owner_id");
                 });
 
             modelBuilder.Entity("HellMail.Domain.Mail_User", b =>
