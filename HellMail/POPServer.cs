@@ -1,13 +1,18 @@
 ﻿using System;
 using System.Net;
 using System.Net.Security;
+using System.Linq;
+using System.Linq.Expressions;
+using HellMail.Data;
+using HellMail.Domain;
+using System.Collections.Generic;
+
 
 namespace HellMail {
 
     public class POPServer : TCPServer {
 
         private string username;
-        private string password;
         private bool authenticated = false;
 
         public POPServer(string IP, int portNumber, string cert) : base(IP, portNumber, cert) {
@@ -52,11 +57,12 @@ namespace HellMail {
                         continue;
                     }
 
-                    if(usernameInput == "tubbe@hellmail.dk" && passwordInput == "1234") {
+                    HellMailContext context = new HellMailContext();
+
+                    if(context.Users.Any(u => u.email == usernameInput) && passwordInput == "1234") {
                         authenticated = true;
 
                         username = usernameInput;
-                        password = passwordInput;
 
                         StreamWrite(client, "+OK maildrop locked and ready");
                     } else {
@@ -67,14 +73,21 @@ namespace HellMail {
                 }
 
                 if (input.StartsWith("STAT", StringComparison.CurrentCultureIgnoreCase) && authenticated) {
-                    StreamWrite(client, "+OK {n0} {n1} " + username);
+                    List<int> mailIDs = Database.GetMailIDList(username);
+
+                    StreamWrite(client, "+OK " + mailIDs.Max());
                     continue;
                 }
 
                 if (input.StartsWith("LIST", StringComparison.CurrentCultureIgnoreCase) && authenticated) {
-                    StreamWrite(client, "+OK {n0} messages {n1 octets}");
-                    StreamWrite(client, "1 {n1.5}");
-                    StreamWrite(client, "2 {n1.5}");
+                    List<int> mailIDs = Database.GetMailIDList(username);
+                    
+                    StreamWrite(client, "+OK " + mailIDs.Max() + " messages");
+
+                    foreach(int id in mailIDs) {
+                        StreamWrite(client, id + " ");
+                    }
+
                     StreamWrite(client, ".");
                     continue;
                 }
@@ -100,6 +113,9 @@ namespace HellMail {
             }
 
         }
+
+       
+
 
     }
 

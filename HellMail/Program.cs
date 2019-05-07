@@ -7,10 +7,10 @@ namespace HellMail {
 
         public static void Main(string[] args) {
 
-            string mailData = 
+            /*string mailData = 
                 "From: kent@hellmail.dk\n" +
                 "To: christian@hellmail.dk\n" +
-                "Cc: christian@hellmail.dk\n" +
+                "Cc: tubbe@hellmail.dk\n" +
                 "Subject: Test\n" + 
                 "\n" +
                 "To: Hej med jer alle sammen TO: \n" +
@@ -26,9 +26,9 @@ namespace HellMail {
 
             mail.Parse(mailData);
 
-            Database.InsertMail(mail);
+            Database.InsertMail(mail);*/
 
-            /*
+            
             for(int i = 0; i < args.Length; i++) {
                 Console.WriteLine(i + ":" + args[i]);
             }
@@ -42,7 +42,7 @@ namespace HellMail {
                 Console.WriteLine(ex);
             }
            
-            */
+            
             /*
             try {
                 SMTPServer server = new SMTPServer("0.0.0.0", int.Parse(args[1]), args[0]);

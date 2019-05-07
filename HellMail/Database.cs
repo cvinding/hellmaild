@@ -8,37 +8,91 @@ using HellMail.Domain;
 namespace HellMail {
 
     public static class Database {
-    
+
+        // InsertMail() is used for inserting the correct number of rows in the appropiate tables
         public static bool InsertMail(Mail mail) {
 
+            // Init db context
             HellMailContext context = new HellMailContext();
 
+            // Select all users that needs to recieve this mail
             var users = context.Users
-                .Where(u => u.email == mail.To || u.email == mail.From || mail.Cc.Contains(u.email) || mail.Cc.Contains(u.email))
+                .Where(u => u.email == mail.To || u.email == mail.From || mail.Cc.Contains(u.email) || mail.Bcc.Contains(u.email))
                 .Select(u => new User {
                     id = u.id,
                     email = u.email
                 })
                 .ToDictionary(u => u.email, u => u.id);
                 
-
             // Create Mail
             Domain.Mail newMail = new Domain.Mail { subject = mail.Subject, message = mail.Message };
 
+            // Add mail to context and insert mail
             context.Add(newMail);
             context.SaveChanges();
 
-            Console.WriteLine(newMail.id);
+            int recipient_type = -1;
 
-            for (int i = 0; i < users.Count; i++) {
-                Mail_User mail_user = new Mail_User { mail_ = newMail, from_user_ = new User { id = users[mail.From] },   };
+            List<Mail_User> mail_users = new List<Mail_User>();
+            List<Hidden_Mails> hidden_mails = new List<Hidden_Mails>();
+
+            // Loop through every mail reciever 
+            foreach(KeyValuePair<string, int> user in users) {
+                
+                // Create the hidden_mails entry and add it to our List
+                Hidden_Mails hidden_mail = new Hidden_Mails {
+                    mail_ = newMail,
+                    user_ = context.Users.Single(u => u.id == user.Value)
+                };
+                
+                hidden_mails.Add(hidden_mail);
+
+                // Skip from user
+                if(user.Key == mail.From && user.Key != mail.To && !mail.Cc.Contains(user.Key) && !mail.Bcc.Contains(user.Key)) {
+                    continue;
+                }
+
+                // Get recipient_type
+                if(user.Key == mail.To) {
+                    recipient_type = 0;
+                } else if (mail.Cc.Contains(user.Key)) {
+                    recipient_type = 1;
+                } else if (mail.Bcc.Contains(user.Key)) {
+                    recipient_type = 2;
+                }
+
+                // Create the mails_users entry and add it to our List
+                Mail_User mail_user = new Mail_User { 
+                    mail_ = newMail, 
+                    from_user_ = context.Users.Single(u => u.id == users[mail.From]), 
+                    to_user_ = context.Users.Single(u => u.id == user.Value), 
+                    recipient_type = recipient_type   
+                };
+                
+                mail_users.Add(mail_user);
+
             }
+            
+            // Add range and insert all entries
+            context.AddRange(mail_users);
+            context.AddRange(hidden_mails);
 
-            // 
-            //Mail_User mail_user = new Mail_User { from_user_ = user1, to_user_ = user2, mail_ = newMail, recipient_type = 0 };
-
+            context.SaveChanges();
 
             return true;
+        }
+
+        public static List<int> GetMailIDList(string email) {
+            
+             // Init db context
+            HellMailContext context = new HellMailContext();
+
+            var mails = context.Mails_Users
+                .Where(mu => mu.to_user_ == context.Users.Where(u => u.email == email).Single() && context.Hidden_Mails.Where(h => h.mail_ == mu.mail_ && h.user_ == mu.to_user_).Single().hidden == 0)
+                .Select(mu => mu.mail_.id)
+                .ToList();
+
+            return mails;
         }
 
     }
