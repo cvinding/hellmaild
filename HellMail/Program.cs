@@ -10,6 +10,7 @@ namespace HellMail {
             string mailData = 
                 "From: kent@hellmail.dk\n" +
                 "To: christian@hellmail.dk\n" +
+                "Cc: christian@hellmail.dk\n" +
                 "Subject: Test\n" + 
                 "\n" +
                 "To: Hej med jer alle sammen TO: \n" +
@@ -25,7 +26,7 @@ namespace HellMail {
 
             mail.Parse(mailData);
 
-
+            Database.InsertMail(mail);
 
             /*
             for(int i = 0; i < args.Length; i++) {

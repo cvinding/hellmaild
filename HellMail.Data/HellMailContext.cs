@@ -1,10 +1,10 @@
 ﻿using HellMail.Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace HellMail.Data
-{
-    public class HellMailContext : DbContext
-    {
+namespace HellMail.Data {
+
+    public class HellMailContext : DbContext {
+
         public DbSet<Mail> Mails { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Mail_User> Mails_Users { get; set; }

@@ -51,7 +51,7 @@ namespace HellMail {
                 int endIndex = data.IndexOf("\n", StringComparison.OrdinalIgnoreCase);
 
                 SetPropValue(tag, data.Substring(0, endIndex));
-                Console.WriteLine(data.Substring(0, endIndex));
+                //Console.WriteLine(data.Substring(0, endIndex));
             }
 
             index = -1;
