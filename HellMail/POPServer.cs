@@ -73,29 +73,137 @@ namespace HellMail {
                 }
 
                 if (input.StartsWith("STAT", StringComparison.CurrentCultureIgnoreCase) && authenticated) {
-                    List<int> mailIDs = Database.GetMailIDList(username);
 
-                    StreamWrite(client, "+OK " + mailIDs.Max());
+                    string type = String.Empty;
+
+                    try {
+
+                        string[] args = input.Split(" ");
+
+                        type = args[1].TrimEnd('\n');
+
+                        if (type != "SENT" && type != "RECIEVED") {
+                            StreamWrite(client, "-ERR usage: STAT (SENT/RECIEVED)");
+                            continue;
+                        }
+
+                    } catch (Exception ex) {
+                        StreamWrite(client, "-ERR usage: STAT (SENT/RECIEVED)");
+                        continue;
+                    }
+
+                    List<int> mailIDs = Database.GetMailIDList(username, type);
+
+                    StreamWrite(client, "+OK " + mailIDs.Count + " messages\n+DONE");
                     continue;
                 }
 
                 if (input.StartsWith("LIST", StringComparison.CurrentCultureIgnoreCase) && authenticated) {
-                    List<int> mailIDs = Database.GetMailIDList(username);
-                    
-                    StreamWrite(client, "+OK " + mailIDs.Max() + " messages");
 
-                    foreach(int id in mailIDs) {
-                        StreamWrite(client, id + " ");
+                    string type = String.Empty;
+                    int startIndex = -1;
+                    int endIndex = -1;
+
+                    try {
+
+                        string[] args = input.Split(" ");
+
+                        type = args[1].TrimEnd('\n');
+
+                        if(type != "SENT" && type != "RECIEVED") {
+                            StreamWrite(client, "-ERR usage: LIST (SENT/RECIEVED) {[START INDEX], [END INDEX]}");
+                            continue;
+                        }
+
+                        if (args.Length > 2) {
+
+                            if(!int.TryParse(args[2], out startIndex) || !int.TryParse(args[3], out endIndex)) {
+                                StreamWrite(client, "-ERR set index was not a valid number");
+                                continue;
+                            }
+
+                            if(startIndex <= -1 || endIndex <= -1) {
+                                StreamWrite(client, "-ERR indices can not have a negative value");
+                                continue;
+                            }
+
+                            if (startIndex > endIndex) {
+                                StreamWrite(client, "-ERR start index can not be higher than end index");
+                                continue;
+                            }
+
+                        }
+
+                    } catch (Exception ex) {
+                        StreamWrite(client, "-ERR usage: LIST (SENT/RECIEVED) {[START INDEX], [END INDEX]}");
+                        continue;
                     }
 
-                    StreamWrite(client, ".");
+                    List<int> mailIDs;
+
+                    if (startIndex != -1 && endIndex != -1) {
+                        mailIDs = Database.GetMailIDList(username, type, startIndex, endIndex);
+                    } else {
+                        mailIDs = Database.GetMailIDList(username, type);
+                    }
+
+                    StreamWrite(client, "+OK " + mailIDs.Count + " messages");
+
+                    if (mailIDs.Count != 0) {
+                        foreach (int id in mailIDs){
+                            StreamWrite(client, id + " ");
+                        }
+                    }
+
+                    StreamWrite(client, "+DONE");
                     continue;
                 }
 
-                if (input.StartsWith("RETR", StringComparison.CurrentCultureIgnoreCase) && authenticated) {
-                    StreamWrite(client, "+OK {n1.5} octets");
-                    StreamWrite(client, "<the POP3 server sends message>");
-                    StreamWrite(client, ".");
+                if (input.StartsWith("HENT", StringComparison.CurrentCultureIgnoreCase) && authenticated) {
+                    List<DbMail> dbMails;
+
+                    try {
+
+                        List<string> inputIds = input.Substring(5).TrimEnd('\n').Split(" ").ToList<string>();
+
+                        bool invalid = false;
+                        for(int i = 0; i < inputIds.Count; i++) {
+
+                            int tmp;
+                            if(!int.TryParse(inputIds[i], out tmp)) {
+                                invalid = true;
+                                break;
+                            }
+
+                        }
+
+                        if(invalid) {
+                            StreamWrite(client, "-ERR invalid argument: expected arguments to be numbers");
+                            continue;
+                        }
+
+                        dbMails = Database.GetMails(username, inputIds);
+
+                    } catch (Exception ex) {
+                        StreamWrite(client, "-ERR Usage: RETR <id> <id> ");
+                        continue;
+                    }
+
+                    string output = "+OK \n"; 
+
+                    if(dbMails.Count > 0) {
+                        foreach (DbMail dbMail in dbMails) {
+                            output += dbMail.FormatMail();
+                        }
+                    } else {
+                        output += "[INFO] Messages were unretrievable \n";
+                    }
+
+                   
+                    output += "+DONE";
+
+                    StreamWrite(client, output);
+
                     continue;
                 }
 

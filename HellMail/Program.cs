@@ -11,13 +11,11 @@ namespace HellMail {
                 "From: kent@hellmail.dk\n" +
                 "To: christian@hellmail.dk\n" +
                 "Cc: tubbe@hellmail.dk\n" +
-                "Subject: Test\n" + 
+                "Subject: Møde tider\n" + 
                 "\n" +
-                "To: Hej med jer alle sammen TO: \n" +
-                "To: Hej med jer alle sammen TO: \n" +
-                "To: Hej med jer alle sammen TO: \n" +
-                "To: Hej med jer alle sammen TO: \n" +
-                "To: Hej med jer alle sammen TO: \n" +
+                "Hej aber \n" +
+                "Trump should be a peach \n" +
+                "Upkiblers to the left \n" +
                 ".\n"
             ;
 
@@ -26,9 +24,9 @@ namespace HellMail {
 
             mail.Parse(mailData);
 
-            Database.InsertMail(mail);*/
+            Database.InsertMail(mail);
+            */
 
-            
             for(int i = 0; i < args.Length; i++) {
                 Console.WriteLine(i + ":" + args[i]);
             }

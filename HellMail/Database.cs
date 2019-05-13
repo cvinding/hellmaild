@@ -82,17 +82,92 @@ namespace HellMail {
             return true;
         }
 
-        public static List<int> GetMailIDList(string email) {
+        public static List<int> GetMailIDList(string email, string type, int startIndex, int endIndex) {
             
-             // Init db context
+            // Init db context
             HellMailContext context = new HellMailContext();
 
-            var mails = context.Mails_Users
+            List<int> mails = new List<int>();
+
+            if (type == "SENT") {
+
+                mails = context.Mails_Users
+                .Where(mu => mu.from_user_ == context.Users.Where(u => u.email == email).Single() && context.Hidden_Mails.Where(h => h.mail_ == mu.mail_ && h.user_ == mu.from_user_).Single().hidden == 0)
+                .Select(mu => mu.mail_.id)
+                .Skip(startIndex - 1)
+                .Take((endIndex - startIndex) + 1)
+                .ToList();
+
+            } else if(type == "RECIEVED") {
+
+                mails = context.Mails_Users
                 .Where(mu => mu.to_user_ == context.Users.Where(u => u.email == email).Single() && context.Hidden_Mails.Where(h => h.mail_ == mu.mail_ && h.user_ == mu.to_user_).Single().hidden == 0)
+                .Select(mu => mu.mail_.id)
+                .Skip(startIndex - 1)
+                .Take((endIndex - startIndex) + 1)
+                .ToList();
+
+            }
+
+            return mails;
+        }
+
+        public static List<int> GetMailIDList(string currentUserEmail, string type) {
+
+            // Init db context
+            HellMailContext context = new HellMailContext();
+
+            List<int> mails = new List<int>();
+
+            if (type == "SENT") {
+
+                mails = context.Mails_Users
+                .Where(mu => mu.from_user_ == context.Users.Where(u => u.email == currentUserEmail).Single() && context.Hidden_Mails.Where(h => h.mail_ == mu.mail_ && h.user_ == mu.from_user_).Single().hidden == 0)
                 .Select(mu => mu.mail_.id)
                 .ToList();
 
+            } else if (type == "RECIEVED") {
+
+                mails = context.Mails_Users
+                .Where(mu => mu.to_user_ == context.Users.Where(u => u.email == currentUserEmail).Single() && context.Hidden_Mails.Where(h => h.mail_ == mu.mail_ && h.user_ == mu.to_user_).Single().hidden == 0)
+                .Select(mu => mu.mail_.id)
+                .ToList();
+            }
+
             return mails;
+        }
+
+        public static List<DbMail> GetMails(string currentUserEmail, List<string> mailIds) {
+
+            List<DbMail> dbMails = new List<DbMail>();
+
+            // Init db context
+            HellMailContext context = new HellMailContext();
+
+            var mails = context.Mails
+                .Where(m => mailIds.Contains(m.id.ToString()))
+                .ToList();
+                
+            for (int i = 0; i < mails.Count; i++) {
+
+                var mail_users = context.Mails_Users
+                    .Where(mu => mu.mail_ == mails[i] && (mu.from_user_.email == currentUserEmail || mu.to_user_.email == currentUserEmail) && context.Hidden_Mails.Where(h => h.mail_ == mu.mail_ && h.user_ == mu.to_user_).Single().hidden == 0)
+                    .Select(mu => new Mail_User {
+                        id = mu.id,
+                        mail_ = mu.mail_,
+                        from_user_ = mu.from_user_,
+                        to_user_ = mu.to_user_,
+                        recipient_type = mu.recipient_type
+                    })
+                    .ToList();
+                    
+                if(mail_users.Count > 0) {
+                    dbMails.Add(new DbMail(mails[i], mail_users));
+                }
+
+            }
+
+            return dbMails;
         }
 
     }

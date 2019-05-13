@@ -11,7 +11,7 @@ namespace HellMail.Data {
         public DbSet<Hidden_Mails> Hidden_Mails { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
-            optionsBuilder.UseMySql("Server=localhost;Database=hellmail;User=phpmyadmin;Password=vinding1998;");
+            optionsBuilder.UseMySql("Server=localhost;Database=hellmail;User=phpmyadmin;Password=admin;");
             base.OnConfiguring(optionsBuilder);
         }
 
