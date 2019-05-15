@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using HellMail.Data;
 using HellMail.Domain;
 using System.Collections.Generic;
-
+using System.Threading;
 
 namespace HellMail {
 
@@ -24,24 +24,35 @@ namespace HellMail {
             StreamWrite(client, "+OK HPOP server ready <" + Helper.GetFQDN() + ">");
 
             string input = String.Empty;
+            string command = String.Empty;
+
             while (true) {
 
                 try {
+
                     input = StreamRead(client);
 
+                    if(input == "") {
+                        client.Close();
+                        break;
+                    } else {
+                        input = input.TrimEnd('\n');
+                    }
+
+                    command = input.Split(" ")[0];
+
                 } catch (Exception e) {
-                    Console.WriteLine(e);
                     break;
                 }
 
-                if (input.StartsWith("UD", StringComparison.CurrentCultureIgnoreCase)) {
+                if (command == "UD") {
                     StreamWrite(client, "+OK hellmaild HPOP server signing off (maildrop empty)");
                     client.Close();
                     break;//exit while
                 }
 
                 // Authenticate the user
-                if(input.StartsWith("APOP", StringComparison.CurrentCultureIgnoreCase)) {
+                if(command == "APOP") {
                     input = input.Replace(Environment.NewLine, "");
 
                     string usernameInput;
@@ -72,7 +83,7 @@ namespace HellMail {
                     continue;
                 }
 
-                if (input.StartsWith("STAT", StringComparison.CurrentCultureIgnoreCase) && authenticated) {
+                if (command == "STAT" && authenticated) {
 
                     string type = String.Empty;
 
@@ -80,7 +91,7 @@ namespace HellMail {
 
                         string[] args = input.Split(" ");
 
-                        type = args[1].TrimEnd('\n');
+                        type = args[1];
 
                         if (type != "SENT" && type != "RECIEVED") {
                             StreamWrite(client, "-ERR usage: STAT (SENT/RECIEVED)");
@@ -98,7 +109,7 @@ namespace HellMail {
                     continue;
                 }
 
-                if (input.StartsWith("LIST", StringComparison.CurrentCultureIgnoreCase) && authenticated) {
+                if (command == "LIST" && authenticated) {
 
                     string type = String.Empty;
                     int startIndex = -1;
@@ -108,7 +119,7 @@ namespace HellMail {
 
                         string[] args = input.Split(" ");
 
-                        type = args[1].TrimEnd('\n');
+                        type = args[1];
 
                         if(type != "SENT" && type != "RECIEVED") {
                             StreamWrite(client, "-ERR usage: LIST (SENT/RECIEVED) {[START INDEX], [END INDEX]}");
@@ -159,12 +170,12 @@ namespace HellMail {
                     continue;
                 }
 
-                if (input.StartsWith("HENT", StringComparison.CurrentCultureIgnoreCase) && authenticated) {
+                if (command == "HENT" && authenticated) {
                     List<DbMail> dbMails;
 
                     try {
 
-                        List<string> inputIds = input.Substring(5).TrimEnd('\n').Split(" ").ToList<string>();
+                        List<string> inputIds = input.Substring(5).Split(" ").ToList<string>();
 
                         bool invalid = false;
                         for(int i = 0; i < inputIds.Count; i++) {
@@ -193,12 +204,11 @@ namespace HellMail {
 
                     if(dbMails.Count > 0) {
                         foreach (DbMail dbMail in dbMails) {
-                            output += dbMail.FormatMail();
+                            output += dbMail.FormatMail() ;
                         }
                     } else {
                         output += "[INFO] Messages were unretrievable \n";
                     }
-
                    
                     output += "+DONE";
 
@@ -207,8 +217,40 @@ namespace HellMail {
                     continue;
                 }
 
-                if (input.StartsWith("DELE", StringComparison.CurrentCultureIgnoreCase) && authenticated) {
-                    StreamWrite(client, "+OK message {n2} deleted");
+                if (command == "DELE" && authenticated) {
+                    List<string> ids;
+
+                    try {
+
+                        ids = input.Substring(5).Split(" ").ToList<string>();
+
+                        bool invalid = false;
+                        for (int i = 0; i < ids.Count; i++) {
+
+                            int tmp;
+                            if (!int.TryParse(ids[i], out tmp)) {
+                                invalid = true;
+                                break;
+                            }
+                        }
+
+                        if (invalid) {
+                            StreamWrite(client, "-ERR invalid argument: expected arguments to be numbers");
+                            continue;
+                        }
+
+                        if(!Database.HideMails(username, ids)) {
+                            StreamWrite(client, "-ERR some mails could not be deleted");
+                            continue;
+                        }
+
+                    } catch (Exception ex) {
+                        StreamWrite(client, "-ERR Usage: DELE <id> <id> ");
+                        continue;
+                    }
+
+                    StreamWrite(client, "+OK " + ids.Count + " messages deleted\n+DONE");
+
                     continue;
                 }
 
@@ -221,9 +263,6 @@ namespace HellMail {
             }
 
         }
-
-       
-
 
     }
 

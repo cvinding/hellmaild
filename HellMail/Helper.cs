@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
 
@@ -21,5 +22,17 @@ namespace HellMail {
             // return the fully qualified name
             return hostName;                    
         }
+
+        public static List<T> ToList<T>(T[] array) {
+
+            List<T> list = new List<T>();
+
+            foreach(T entry in array) {
+                list.Add(entry);
+            }
+
+            return list;
+        }
+
     }
 }

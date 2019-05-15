@@ -71,8 +71,8 @@ namespace HellMail {
                 mail += bcc.TrimEnd(',') + "\n";
             }
 
-            mail += "\n" + Message + "\n.\n";
-            
+            mail += "\n\"" + Message.Replace("\"","\\\"", StringComparison.CurrentCulture) + "\"\n.\n\n";
+
             return mail;
         }
 

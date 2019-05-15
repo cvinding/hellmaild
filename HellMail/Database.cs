@@ -170,5 +170,22 @@ namespace HellMail {
             return dbMails;
         }
 
+        public static bool HideMails(string currentUserEmail, List<string> mailIds) {
+        
+            // Init db context
+            HellMailContext context = new HellMailContext();
+
+            foreach(string mailId in mailIds) {
+            
+                var hiddenMail = context.Hidden_Mails
+                   .Where(hm => hm.mail_ == context.Mails.Where(m => m.id == Convert.ToInt32(mailId)).Single() && hm.user_ == context.Users.Where(u => u.email == currentUserEmail).Single())
+                   .Single();
+                    hiddenMail.hidden = 1;
+            }
+
+            return (context.SaveChanges() == mailIds.Count);
+        }
+
+
     }
 }
