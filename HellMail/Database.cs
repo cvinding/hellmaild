@@ -93,6 +93,7 @@ namespace HellMail {
 
                 mails = context.Mails_Users
                 .Where(mu => mu.from_user_ == context.Users.Where(u => u.email == email).Single() && context.Hidden_Mails.Where(h => h.mail_ == mu.mail_ && h.user_ == mu.from_user_).Single().hidden == 0)
+                .OrderByDescending(mu => mu.mail_.id)
                 .Select(mu => mu.mail_.id)
                 .Skip(startIndex - 1)
                 .Take((endIndex - startIndex) + 1)
@@ -102,11 +103,11 @@ namespace HellMail {
 
                 mails = context.Mails_Users
                 .Where(mu => mu.to_user_ == context.Users.Where(u => u.email == email).Single() && context.Hidden_Mails.Where(h => h.mail_ == mu.mail_ && h.user_ == mu.to_user_).Single().hidden == 0)
+                .OrderByDescending(mu => mu.mail_.id)
                 .Select(mu => mu.mail_.id)
                 .Skip(startIndex - 1)
                 .Take((endIndex - startIndex) + 1)
                 .ToList();
-
             }
 
             return mails;
@@ -123,6 +124,7 @@ namespace HellMail {
 
                 mails = context.Mails_Users
                 .Where(mu => mu.from_user_ == context.Users.Where(u => u.email == currentUserEmail).Single() && context.Hidden_Mails.Where(h => h.mail_ == mu.mail_ && h.user_ == mu.from_user_).Single().hidden == 0)
+                .OrderByDescending(mu => mu.mail_.id)
                 .Select(mu => mu.mail_.id)
                 .ToList();
 
@@ -130,6 +132,7 @@ namespace HellMail {
 
                 mails = context.Mails_Users
                 .Where(mu => mu.to_user_ == context.Users.Where(u => u.email == currentUserEmail).Single() && context.Hidden_Mails.Where(h => h.mail_ == mu.mail_ && h.user_ == mu.to_user_).Single().hidden == 0)
+                .OrderByDescending(mu => mu.mail_.id)
                 .Select(mu => mu.mail_.id)
                 .ToList();
             }
@@ -185,7 +188,6 @@ namespace HellMail {
 
             return (context.SaveChanges() == mailIds.Count);
         }
-
 
     }
 }

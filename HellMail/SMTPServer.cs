@@ -1,12 +1,18 @@
 ﻿using System;
 using System.Net.Security;
+using HellMail.Data;
 
 namespace HellMail {
 
     public class SMTPServer : TCPServer {
 
-        public SMTPServer(string IP, int portNumber, string cert) : base(IP, portNumber, cert) {
+        private readonly string password;
+
+        private bool authenticated = false;
+
+        public SMTPServer(string IP, int portNumber, string cert, string password) : base(IP, portNumber, cert) {
             this.setName("SMTP");
+            this.password = password;
         }
 
         // ProcessClient is the SMTP server's way of handling SMTP clients
@@ -47,17 +53,40 @@ namespace HellMail {
                     continue;
                 }
 
-                if (input.Substring(0, 6) == "RCPT TO") {
+                if(input.Length >= 11 && input.Substring(0, 10) == "AUTH PLAIN") {
+                    input = input.Replace(Environment.NewLine, "");
+
+                    string passwordInput;
+
+                    try {
+                        passwordInput = input.Split(" ")[2];
+
+                    } catch (Exception ex) {
+                        StreamWrite(client, "-501 Syntax error, usage: AUTH PLAIN <password> ");
+                        continue;
+                    }
+
+                    if (passwordInput == password) {
+                        authenticated = true;
+                        StreamWrite(client, "235 Authentication successful");
+                    } else {
+                        authenticated = false;
+                        StreamWrite(client, "501 Syntax error, authentication failed");
+                    }
+                    continue;
+                }
+
+                if (input.Length >= 8 && input.Substring(0, 7) == "RCPT TO" && authenticated) {
                     StreamWrite(client, "250 OK");
                     continue;
                 }
 
-                if (input.Substring(0, 8) == "MAIL FROM") {
+                if (input.Length >= 10 && input.Substring(0, 9) == "MAIL FROM" && authenticated) {
                     StreamWrite(client, "250 OK");
                     continue;
                 }
 
-                if (command == "DATA") {
+                if (command == "DATA" && authenticated) {
                     StreamWrite(client, "354 Start mail input; end with '.\n'");
 
                     input = StreamRead(client);
@@ -70,7 +99,8 @@ namespace HellMail {
 
                         Database.InsertMail(mail);
 
-                    } catch (Exception) {
+                    } catch (Exception ex) {
+                        Logger.Log(ex.ToString());
                         StreamWrite(client, "501 Syntax error");
                         continue;
                     }
@@ -79,8 +109,11 @@ namespace HellMail {
                     continue;
                 }
 
-
-                StreamWrite(client, "500 unknown command");
+                if (authenticated) {
+                    StreamWrite(client, "500 unknown command");
+                } else {
+                    StreamWrite(client, "530 unknown command OR authentication missing");
+                }
 
             }
         }

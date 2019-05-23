@@ -13,10 +13,13 @@ namespace HellMail {
     public class POPServer : TCPServer {
 
         private string username;
+        private readonly string password;
+
         private bool authenticated = false;
 
-        public POPServer(string IP, int portNumber, string cert) : base(IP, portNumber, cert) {
+        public POPServer(string IP, int portNumber, string cert, string password) : base(IP, portNumber, cert) {
             this.setName("HPOP");
+            this.password = password;
         }
 
         protected override void ProcessClient(SslStream client) {
@@ -45,7 +48,7 @@ namespace HellMail {
                     break;
                 }
 
-                if (command == "UD") {
+                if (command == "QUIT") {
                     StreamWrite(client, "+OK hellmaild HPOP server signing off (maildrop empty)");
                     client.Close();
                     break;//exit while
@@ -70,7 +73,7 @@ namespace HellMail {
 
                     HellMailContext context = new HellMailContext();
 
-                    if(context.Users.Any(u => u.email == usernameInput) && passwordInput == "1234") {
+                    if(context.Users.Any(u => u.email == usernameInput) && passwordInput == password) {
                         authenticated = true;
 
                         username = usernameInput;
@@ -170,7 +173,7 @@ namespace HellMail {
                     continue;
                 }
 
-                if (command == "HENT" && authenticated) {
+                if (command == "RETR" && authenticated) {
                     List<DbMail> dbMails;
 
                     try {
